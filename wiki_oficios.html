@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ofícios — O Registro das Guildas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#13171e; --bg2:#171c25; --panel:#1b2230; --raise:#222b3a;
+    --line:#2c3647; --line2:#3a465a;
+    --ink:#ece7da; --muted:#9aa6ba; --faint:#6b7587;
+    --gold:#e7c66b;
+    /* cores dos grupos = sistema de informação */
+    --vag:#8e98a8;
+    --col:#6fae57;   /* Coletor — folha/esmeralda */
+    --art:#dc9a3e;   /* Artesão — cobre/forja */
+    --sab:#9d7fda;   /* Sábio — lápis/encantamento */
+    --com:#d75a52;   /* Combatente — carmim */
+    --good:#7cc06a; --bad:#df6a5f;
+    --shadow:0 14px 40px -12px rgba(0,0,0,.7);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 78% -10%, rgba(157,127,218,.10), transparent 60%),
+      radial-gradient(1000px 600px at -5% 8%, rgba(111,174,87,.08), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'Spectral',Georgia,serif;
+    font-size:16px; line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:var(--gold);text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;
+    padding:22px clamp(16px,4vw,40px) 18px;
+    border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(231,198,107,.04),transparent);
+  }
+  .wordmark{
+    font-family:'Cinzel',serif;font-weight:700;
+    font-size:clamp(22px,3.4vw,30px);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink);margin:0;
+  }
+  .wordmark .glyph{color:var(--gold)}
+  .tagline{color:var(--muted);font-style:italic;font-size:14px;flex:1;min-width:200px}
+  .verchip{
+    font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.06em;
+    color:var(--muted);border:1px solid var(--line2);border-radius:999px;
+    padding:5px 12px;white-space:nowrap;
+  }
+
+  /* ---------- Layout ---------- */
+  .shell{display:grid;grid-template-columns:230px 1fr;gap:0;min-height:calc(100% - 78px)}
+  @media(max-width:860px){.shell{grid-template-columns:1fr}}
+
+  /* ---------- Sidebar ---------- */
+  nav{
+    border-right:1px solid var(--line);
+    padding:20px 14px;display:flex;flex-direction:column;gap:4px;
+    position:sticky;top:0;align-self:start;
+  }
+  @media(max-width:860px){
+    nav{position:static;border-right:none;border-bottom:1px solid var(--line);
+        flex-direction:row;flex-wrap:wrap;padding:12px clamp(16px,4vw,40px)}
+  }
+  .nav-eyebrow{
+    font-family:'Cinzel',serif;font-size:10px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--faint);margin:2px 8px 8px;
+  }
+  @media(max-width:860px){.nav-eyebrow{display:none}}
+  .navbtn{
+    appearance:none;background:none;border:1px solid transparent;
+    color:var(--muted);font-family:'Spectral',serif;font-size:15px;
+    text-align:left;padding:9px 12px;border-radius:8px;cursor:pointer;
+    display:flex;align-items:center;gap:10px;transition:.18s;
+  }
+  .navbtn:hover{color:var(--ink);background:var(--bg2)}
+  .navbtn.active{color:var(--ink);background:var(--raise);border-color:var(--line2)}
+  .navbtn .ic{width:18px;text-align:center;color:var(--gold);opacity:.85;font-size:13px}
+  .navbtn.home .ic{color:var(--gold)}
+  .nav-sep{height:1px;background:var(--line);margin:8px 8px}
+  @media(max-width:860px){.nav-sep{display:none}}
+
+  /* ---------- Stage ---------- */
+  main{padding:clamp(18px,3.5vw,40px);min-width:0;position:relative}
+  .view{display:none;animation:rise .4s ease both}
+  .view.show{display:block}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .stage-head{margin:0 0 6px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .stage-title{font-family:'Cinzel',serif;font-weight:600;letter-spacing:.04em;
+    font-size:clamp(20px,2.6vw,26px);margin:0}
+  .stage-sub{color:var(--muted);font-style:italic;margin:2px 0 22px;max-width:62ch}
+
+  /* ---------- TREE ---------- */
+  #tree{position:relative;padding:8px 0 24px;overflow-x:auto}
+  #wires{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+  #wires path{fill:none;stroke-width:2;opacity:.35;
+    stroke-dasharray:var(--len);stroke-dashoffset:var(--len);
+    animation:draw .9s ease forwards}
+  #wires path.lit{opacity:1;stroke-width:3}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .htree{display:grid;grid-template-columns:auto auto auto;align-items:center;justify-items:start;
+    column-gap:clamp(34px,7vw,110px);row-gap:clamp(16px,3vw,30px);
+    position:relative;z-index:1;width:max-content;min-width:100%}
+  .root{grid-column:1;grid-row:1/-1;align-self:center;justify-self:center}
+  .base{grid-column:2}
+  .specs{grid-column:3;display:flex;flex-direction:column;gap:10px}
+  .root,.base,.specs{position:relative;z-index:1}
+  .r1{grid-row:1}.r2{grid-row:2}.r3{grid-row:3}.r4{grid-row:4}
+  @media(max-width:680px){.htree{column-gap:clamp(20px,9vw,40px)}}
+
+  .node{
+    appearance:none;cursor:pointer;position:relative;
+    background:var(--panel);border:1px solid var(--line2);
+    border-radius:12px;padding:12px 16px;min-width:118px;text-align:center;
+    color:var(--ink);transition:transform .16s, box-shadow .16s, border-color .16s;
+    opacity:0;animation:pop .45s ease forwards;
+  }
+  @keyframes pop{from{opacity:0;transform:scale(.9) translateY(6px)}to{opacity:1;transform:none}}
+  .node:hover,.node:focus-visible{transform:translateY(-3px);
+    box-shadow:var(--shadow);outline:none}
+  .node .nm{font-family:'Cinzel',serif;font-weight:600;font-size:15px;letter-spacing:.03em;display:block}
+  .node .tp{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--faint);margin-top:3px;display:block}
+  .node::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+    border-radius:12px 0 0 12px;background:var(--gc,var(--vag))}
+  .node:hover{border-color:var(--gc,var(--line2))}
+  .node[data-role="vagabundo"]{padding:16px 26px;background:var(--raise)}
+  .node[data-role="vagabundo"] .nm{font-size:17px}
+  .node.base{box-shadow:inset 0 0 0 1px rgba(255,255,255,.03)}
+  .node.spec{min-width:104px;padding:10px 13px}
+  .node.spec .nm{font-size:13.5px}
+  /* tint by group */
+  .g-vag{--gc:var(--vag)} .g-col{--gc:var(--col)} .g-art{--gc:var(--art)}
+  .g-sab{--gc:var(--sab)} .g-com{--gc:var(--com)}
+  .node.lit{border-color:var(--gc);box-shadow:0 0 0 1px var(--gc), var(--shadow)}
+
+  .tree-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:26px;
+    font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);
+    border-top:1px solid var(--line);padding-top:16px}
+  .tree-legend span{display:inline-flex;align-items:center;gap:7px}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+
+  /* ---------- ROLE PANEL ---------- */
+  .role-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:4px}
+  .role-name{font-family:'Cinzel',serif;font-weight:700;font-size:clamp(24px,3.4vw,34px);
+    letter-spacing:.03em;margin:0;line-height:1.05}
+  .badge{font-family:'Space Mono',monospace;font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
+  .badge.grp{color:#0e1218;border:none;font-weight:700}
+  .role-id{font-family:'Space Mono',monospace;font-size:12.5px;color:var(--gold);
+    background:var(--bg2);border:1px solid var(--line);border-radius:8px;
+    padding:6px 11px;cursor:pointer;transition:.15s}
+  .role-id:hover{border-color:var(--gold)}
+  .role-id .lbl{color:var(--faint)}
+  .role-summary{font-style:italic;color:var(--muted);font-size:17px;margin:10px 0 26px;max-width:64ch}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px;
+    border-top:3px solid var(--gc,var(--line2))}
+  .card h3{font-family:'Cinzel',serif;font-weight:600;font-size:13px;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--ink);margin:0 0 14px;display:flex;align-items:center;gap:9px}
+  .card h3 .ic{color:var(--gc,var(--gold));font-size:14px}
+  .sub{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--faint);margin:14px 0 8px}
+  .sub:first-of-type{margin-top:0}
+
+  ul.clean{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+  ul.clean li{display:flex;gap:9px;font-size:14.5px;line-height:1.45}
+  ul.clean li::before{content:"";flex:none;width:6px;height:6px;border-radius:2px;
+    background:var(--gc,var(--muted));margin-top:8px}
+  ul.clean.muted li{color:var(--muted)}
+  ul.clean.muted li::before{background:var(--faint)}
+  ul.clean.good li::before{background:var(--good)}
+  ul.clean.bad li::before{background:var(--bad)}
+  .tag{font-family:'Space Mono',monospace;font-size:10px;color:var(--faint);
+    border:1px solid var(--line2);border-radius:5px;padding:1px 6px;margin-left:6px;white-space:nowrap}
+  .none{color:var(--faint);font-style:italic;font-size:14px}
+
+  /* station chips */
+  .stations{display:flex;flex-direction:column;gap:9px}
+  .stn{display:flex;align-items:flex-start;gap:10px;font-size:14.5px}
+  .acc{font-family:'Space Mono',monospace;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;
+    padding:3px 8px;border-radius:6px;flex:none;margin-top:1px}
+  .acc.pleno{background:var(--gc,var(--good));color:#0e1218;font-weight:700}
+  .acc.lim{border:1px solid var(--gc,var(--line2));color:var(--gc,var(--muted))}
+
+  /* drops bars */
+  .drops{display:flex;flex-direction:column;gap:11px}
+  .drop{display:grid;grid-template-columns:96px 1fr 52px;align-items:center;gap:10px}
+  .drop .dl{font-size:13.5px;color:var(--muted)}
+  .drop .track{height:9px;background:var(--bg);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+  .drop .fill{height:100%;border-radius:99px}
+  .drop .dv{font-family:'Space Mono',monospace;font-size:12.5px;text-align:right}
+  .t200{background:var(--gold);} .v200{color:var(--gold)}
+  .t100{background:var(--good)} .v100{color:var(--good)}
+  .t50{background:var(--art)} .v50{color:var(--art)}
+  .t10{background:#5a4a4a} .v10{color:var(--faint)}
+  .drops-note{font-size:12.5px;color:var(--faint);margin-top:12px;font-style:italic}
+
+  .progline{display:flex;gap:10px;align-items:baseline;font-size:14.5px;margin-bottom:9px}
+  .progline .k{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--faint);flex:none;width:96px}
+  .cost{font-family:'Space Mono',monospace;color:var(--gold);font-weight:700}
+  .note{background:var(--bg2);border-left:3px solid var(--gc,var(--gold));border-radius:0 8px 8px 0;
+    padding:11px 14px;font-size:13.5px;color:var(--muted);margin-top:14px}
+
+  /* ---------- REFERENCE PANELS ---------- */
+  .prose{max-width:74ch}
+  .prose h3{font-family:'Cinzel',serif;font-weight:600;font-size:15px;letter-spacing:.08em;
+    margin:30px 0 10px;color:var(--ink)}
+  .prose h3:first-child{margin-top:0}
+  .prose p{margin:0 0 14px}
+  .prose ul{margin:0 0 16px;padding-left:22px}
+  .prose li{margin:5px 0}
+  .prose strong{color:var(--ink);font-weight:600}
+  .prose code,.mono{font-family:'Space Mono',monospace;font-size:.85em;background:var(--bg2);
+    border:1px solid var(--line);border-radius:5px;padding:1px 6px;color:var(--gold)}
+  .callout{background:var(--bg2);border:1px solid var(--line);border-left:3px solid var(--gold);
+    border-radius:0 10px 10px 0;padding:14px 18px;margin:18px 0;font-style:italic;color:var(--muted)}
+  table.ref{width:100%;border-collapse:collapse;margin:8px 0 20px;font-size:14px}
+  table.ref th,table.ref td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  table.ref th{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--faint);font-weight:400}
+  table.ref td .cost{font-size:13px}
+  table.ref tr:hover td{background:var(--bg2)}
+
+  /* recipe 3x3 grids */
+  .recipes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:18px;margin:8px 0 18px}
+  .recipe{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .recipe h4{font-family:'Cinzel',serif;font-size:13px;letter-spacing:.05em;margin:0 0 4px}
+  .recipe .yield{font-family:'Space Mono',monospace;font-size:11px;color:var(--gold);margin-bottom:12px}
+  .craftgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;max-width:210px}
+  .craftgrid.h2{grid-template-rows:repeat(2,1fr)}
+  .cell{aspect-ratio:1;border-radius:7px;background:var(--bg);border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    font-size:9.5px;line-height:1.15;color:var(--muted);padding:3px}
+  .cell.f{background:var(--raise);border-color:var(--line2);color:var(--ink);font-weight:600}
+  .cell.e{opacity:.35}
+  .grpgrid{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 14px}
+  .grppill{font-size:13px;border:1px solid var(--gc,var(--line2));color:var(--ink);
+    border-radius:999px;padding:5px 13px;display:inline-flex;gap:7px;align-items:center}
+  .grppill .d{width:9px;height:9px;border-radius:50%;background:var(--gc)}
+
+  footer{color:var(--faint);font-size:12px;text-align:center;padding:26px 16px 36px;
+    border-top:1px solid var(--line);font-family:'Space Mono',monospace;letter-spacing:.04em}
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important}
+    .node{opacity:1!important;transform:none!important}
+    #wires path{stroke-dashoffset:0!important;opacity:.35}
+    .view{opacity:1!important}
+  }
+  .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);
+    background:var(--raise);border:1px solid var(--gold);color:var(--ink);
+    padding:10px 18px;border-radius:10px;font-size:13px;opacity:0;pointer-events:none;
+    transition:.25s;z-index:50;font-family:'Space Mono',monospace}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="wordmark">Of<span class="glyph">í</span>cios</h1>
+  <span class="tagline">O registro das guildas — especialize-se, e troque com quem fez o resto.</span>
+  <span class="verchip">v1.0 · MC 1.20.1 · Fabric · server-side</span>
+</header>
+
+<div class="shell">
+  <!-- ===================== SIDEBAR ===================== -->
+  <nav id="nav">
+    <div class="nav-eyebrow">A árvore</div>
+    <button class="navbtn home active" data-view="tree"><span class="ic">⌂</span> Árvore de papéis</button>
+    <div class="nav-sep"></div>
+    <div class="nav-eyebrow">Páginas</div>
+    <button class="navbtn" data-ref="sobre"><span class="ic">◆</span> Sobre o mod</button>
+    <button class="navbtn" data-ref="passos"><span class="ic">→</span> Primeiros passos</button>
+    <button class="navbtn" data-ref="prog"><span class="ic">↑</span> Progressão &amp; comandos</button>
+    <button class="navbtn" data-ref="receitas"><span class="ic">⚒</span> Receitas novas</button>
+    <button class="navbtn" data-ref="estacoes"><span class="ic">⌗</span> Estações de trabalho</button>
+    <button class="navbtn" data-ref="efeitos"><span class="ic">✦</span> Efeitos</button>
+    <button class="navbtn" data-ref="drops"><span class="ic">%</span> Drops</button>
+    <button class="navbtn" data-ref="faq"><span class="ic">?</span> FAQ</button>
+  </nav>
+
+  <!-- ===================== STAGE ===================== -->
+  <main>
+
+    <!-- TREE VIEW -->
+    <section class="view show" id="view-tree">
+      <h2 class="stage-title">A árvore de papéis</h2>
+      <p class="stage-sub">Da esquerda para a direita: todo jogador começa <strong>Vagabundo</strong>, avança para uma das 4 <strong>bases</strong> e, dentro do grupo, para uma <strong>especialização</strong>. Toque num papel para ver tudo sobre ele.</p>
+      <div id="tree">
+        <div class="htree">
+          <svg id="wires" preserveAspectRatio="none"></svg>
+          <div class="root">
+            <button class="node g-vag" data-role="vagabundo"><span class="nm">Vagabundo</span><span class="tp">início</span></button>
+          </div>
+
+          <div class="base r1"><button class="node base g-col" data-role="coletor"><span class="nm">Coletor</span><span class="tp">base</span></button></div>
+          <div class="specs r1">
+            <button class="node spec g-col" data-role="minerador"><span class="nm">Minerador</span><span class="tp">esp.</span></button>
+            <button class="node spec g-col" data-role="lenhador"><span class="nm">Lenhador</span><span class="tp">esp.</span></button>
+            <button class="node spec g-col" data-role="fazendeiro"><span class="nm">Fazendeiro</span><span class="tp">esp.</span></button>
+          </div>
+
+          <div class="base r2"><button class="node base g-art" data-role="artesao"><span class="nm">Artesão</span><span class="tp">base</span></button></div>
+          <div class="specs r2">
+            <button class="node spec g-art" data-role="ferreiro"><span class="nm">Ferreiro</span><span class="tp">esp.</span></button>
+            <button class="node spec g-art" data-role="engenheiro"><span class="nm">Engenheiro</span><span class="tp">esp.</span></button>
+          </div>
+
+          <div class="base r3"><button class="node base g-sab" data-role="sabio"><span class="nm">Sábio</span><span class="tp">base</span></button></div>
+          <div class="specs r3">
+            <button class="node spec g-sab" data-role="feiticeiro"><span class="nm">Feiticeiro</span><span class="tp">esp.</span></button>
+            <button class="node spec g-sab" data-role="alquimista"><span class="nm">Alquimista</span><span class="tp">esp.</span></button>
+          </div>
+
+          <div class="base r4"><button class="node base g-com" data-role="combatente"><span class="nm">Combatente</span><span class="tp">base</span></button></div>
+          <div class="specs r4">
+            <button class="node spec g-com" data-role="cavaleiro"><span class="nm">Cavaleiro</span><span class="tp">esp.</span></button>
+            <button class="node spec g-com" data-role="arqueiro"><span class="nm">Arqueiro</span><span class="tp">esp.</span></button>
+          </div>
+        </div>
+        <div class="tree-legend">
+          <span><i class="dot" style="background:var(--col)"></i>Coletor</span>
+          <span><i class="dot" style="background:var(--art)"></i>Artesão</span>
+          <span><i class="dot" style="background:var(--sab)"></i>Sábio</span>
+          <span><i class="dot" style="background:var(--com)"></i>Combatente</span>
+          <span><i class="dot" style="background:var(--vag)"></i>Vagabundo</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ROLE VIEW (filled by JS) -->
+    <section class="view" id="view-role"></section>
+
+    <!-- REFERENCE VIEWS -->
+    <section class="view" id="view-ref">
+      <!-- SOBRE -->
+      <div class="refblock" data-ref="sobre">
+        <h2 class="stage-title">Sobre o mod</h2>
+        <div class="prose">
+          <p><strong>Ofícios</strong> é um mod <em>server-side</em> para <strong>Minecraft 1.20.1 (Fabric)</strong> que transforma o mundo num jogo de <strong>especialização e interdependência</strong>: cada jogador escolhe um <strong>papel</strong> (ofício) e só esse papel domina certas fabricações, estações, encantamentos, poções e drops. Ninguém faz tudo sozinho — para prosperar, a comunidade precisa <strong>comerciar</strong>.</p>
+          <div class="callout">Você é <strong>excelente</strong> no seu ofício, <strong>mediano</strong> no resto do seu grupo e <strong>ruim</strong> fora dele. O caminho natural não é fazer tudo: é especializar-se e trocar com quem se especializou no resto.</div>
+          <h3>O que este mod faz</h3>
+          <ul>
+            <li><strong>14 papéis</strong> em 4 grupos, mais o estado inicial <em>Vagabundo</em>.</li>
+            <li><strong>Gate de fabricação:</strong> cada item de ofício só pode ser criado pelo papel certo.</li>
+            <li><strong>Gate de estações:</strong> Alto-forno, Bigorna, Mesa de Encantamentos, Suporte de Poções, Cortador de Pedras, Tear e Bancada de Ferraria respondem ao seu papel.</li>
+            <li><strong>Encantamento e poção divididos</strong> entre Sábio/Feiticeiro e Sábio/Alquimista.</li>
+            <li><strong>Efeitos</strong> de bônus e penalidade conforme a ferramenta, arma, armadura ou montaria.</li>
+            <li><strong>Drops escalados</strong> por papel — um Minerador colhe minério muito melhor que os outros.</li>
+          </ul>
+          <h3>Clientes vanilla</h3>
+          <p>O mod roda <strong>inteiramente no servidor</strong> e <strong>não adiciona itens customizados</strong> — todas as regras são aplicadas pelo servidor. Por isso funciona com <strong>clientes vanilla puros</strong>: ninguém precisa instalar nada para jogar. Os papéis são salvos por <strong>UUID</strong> e sobrevivem a morte, logout e reinício.</p>
+        </div>
+      </div>
+
+      <!-- PRIMEIROS PASSOS -->
+      <div class="refblock" data-ref="passos" hidden>
+        <h2 class="stage-title">Primeiros passos</h2>
+        <div class="prose">
+          <h3>1 · O que você é ao entrar</h3>
+          <p>Todo jogador começa como <strong>Vagabundo</strong>, um aprendiz sem ofício. Ele não tem fabricação exclusiva (além da Vara de Pesca, compartilhada com os Coletores), <strong>não sofre</strong> penalidade com ferramentas de madeira ou pedra, e recebe <strong>100%</strong> dos drops de animais (para não passar fome) e <strong>50%</strong> nas demais atividades. Dá para sobreviver enquanto decide.</p>
+          <h3>2 · Veja seu papel</h3>
+          <p>Digite <code>/role</code> (ou <code>/r</code>). Aparece seu papel e grupo, seu XP disponível em níveis, e as transições possíveis — cada uma como um botão clicável com o custo.</p>
+          <h3>3 · Escolha um caminho</h3>
+          <p>A progressão custa <strong>níveis de XP</strong>. O caminho recomendado: Vagabundo → uma base (5 a 15 níveis), depois base → especialista do grupo (15 níveis, ou 20 para o Engenheiro). Use <code>/role set &lt;papel&gt;</code>; no menu, clicar numa transição já preenche o comando — basta apertar Enter.</p>
+          <div class="callout">Sair do seu grupo é caro (passa pelo Vagabundo). É barato descer e subir <strong>dentro</strong> do mesmo grupo. Veja todos os custos em <strong>Progressão &amp; comandos</strong>.</div>
+          <h3>4 · Regras de ouro</h3>
+          <ul>
+            <li><strong>Use a ferramenta/arma certa.</strong> Ferramenta errada na mão pode dar penalidade (Fraqueza, Lentidão, Fadiga).</li>
+            <li><strong>Você não fabrica tudo.</strong> Itens de outros ofícios você obtém comerciando.</li>
+            <li><strong>As estações respondem ao papel.</strong> Um não-Ferreiro não usa a Bancada de Ferraria, etc.</li>
+          </ul>
+          <h3>Instalação (servidor)</h3>
+          <ul>
+            <li>Use Minecraft <strong>1.20.1</strong> com <strong>Fabric Loader</strong> e <strong>Fabric API</strong>.</li>
+            <li>Coloque o <code>.jar</code> do Ofícios na pasta <code>mods/</code> do <strong>servidor</strong>.</li>
+            <li>Pronto. Clientes vanilla jogam normalmente, sem instalar nada.</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- PROGRESSÃO -->
+      <div class="refblock" data-ref="prog" hidden>
+        <h2 class="stage-title">Progressão &amp; comandos</h2>
+        <div class="prose">
+          <p>A troca de papel <strong>custa níveis de XP</strong> e segue caminhos fixos. A <strong>ida</strong> depende do destino; a <strong>volta</strong> é fixa e de propósito ≥ a ida.</p>
+          <table class="ref">
+            <thead><tr><th>Transição</th><th>Custo</th></tr></thead>
+            <tbody>
+              <tr><td>Vagabundo → <strong>Coletor</strong> ou <strong>Combatente</strong></td><td><span class="cost">5</span></td></tr>
+              <tr><td>Vagabundo → <strong>Artesão</strong></td><td><span class="cost">10</span></td></tr>
+              <tr><td>Vagabundo → <strong>Sábio</strong></td><td><span class="cost">15</span></td></tr>
+              <tr><td>Base → <strong>especialista</strong> do mesmo grupo</td><td><span class="cost">15</span></td></tr>
+              <tr><td>Base → <strong>Engenheiro</strong> (exceção)</td><td><span class="cost">20</span></td></tr>
+              <tr><td>Especialista → sua própria <strong>base</strong></td><td><span class="cost">20</span></td></tr>
+              <tr><td>Base → <strong>Vagabundo</strong></td><td><span class="cost">20</span></td></tr>
+              <tr><td>Especialista → <strong>Vagabundo</strong></td><td><span class="cost">32</span></td></tr>
+            </tbody>
+          </table>
+          <h3>Custo total até cada especialista (do zero)</h3>
+          <ul>
+            <li>Minerador / Lenhador / Fazendeiro e Cavaleiro / Arqueiro = <strong>20</strong></li>
+            <li>Ferreiro = <strong>25</strong></li>
+            <li>Feiticeiro / Alquimista / Engenheiro = <strong>30</strong></li>
+          </ul>
+          <h3>Transições não listadas são inválidas</h3>
+          <ul>
+            <li><strong>Base → outra base</strong> não existe direto: passe por Vagabundo (ex.: Coletor → Vagabundo → Artesão).</li>
+            <li><strong>Especialista → outro especialista</strong> passa pela base (mesmo grupo) ou pelo Vagabundo (trocar de grupo).</li>
+            <li>Nunca se pula de Vagabundo direto para especialista — sempre pela base primeiro.</li>
+          </ul>
+          <div class="callout">Trocar Minerador → Ferreiro custa <strong>57 níveis</strong> (32+10+15): resetar para Vagabundo costuma sair mais barato que tentar atravessar grupos. Especializar-se e comerciar é mais eficiente.</div>
+          <h3>Comandos</h3>
+          <table class="ref">
+            <thead><tr><th>Comando</th><th>Ação</th></tr></thead>
+            <tbody>
+              <tr><td><code>/role</code> ou <code>/r</code></td><td>Mostra papel atual, grupo, XP e as transições clicáveis.</td></tr>
+              <tr><td><code>/role set &lt;papel&gt;</code></td><td>Muda para o papel, cobrando o XP. Aceita os <span class="mono">id</span> dos papéis.</td></tr>
+              <tr><td><code>/role info &lt;player&gt;</code></td><td>Mostra papel e grupo de outro jogador online (não mostra o XP dele).</td></tr>
+            </tbody>
+          </table>
+          <p>No menu, clicar numa transição <strong>sugere</strong> o comando no chat (você confirma com Enter), evitando gasto acidental de XP. Toda validação é feita no servidor.</p>
+        </div>
+      </div>
+
+      <!-- RECEITAS -->
+      <div class="refblock" data-ref="receitas" hidden>
+        <h2 class="stage-title">Receitas novas e modificadas</h2>
+        <div class="prose">
+          <p>Itens em um <strong>papel base</strong> são herdados por seus especialistas; itens em um <strong>especialista</strong> são exclusivos. Qualquer item fora das listas é fabricável por todos. Item bloqueado <strong>some da grade de resultado</strong> com aviso no chat.</p>
+        </div>
+        <div class="recipes">
+          <div class="recipe">
+            <h4>Verruga do Nether <span style="color:var(--sab)">· Alquimista</span></h4>
+            <div class="yield">→ 1 Verruga do Nether</div>
+            <div class="craftgrid">
+              <div class="cell f">Carne Podre</div><div class="cell f">Flor de Esporos</div><div class="cell f">Olho Aranha Ferm.</div>
+              <div class="cell f">Samambaia</div><div class="cell f">Cogumelo Verm.</div><div class="cell f">Samambaia</div>
+              <div class="cell f">Olho Aranha Ferm.</div><div class="cell f">Propágulo Mangue</div><div class="cell f">Carne Podre</div>
+            </div>
+          </div>
+          <div class="recipe">
+            <h4>Vara de Blaze <span style="color:var(--sab)">· Alquimista</span></h4>
+            <div class="yield">→ 2 Varas de Blaze</div>
+            <div class="craftgrid">
+              <div class="cell f">Ouro</div><div class="cell e">·</div><div class="cell f">Balde Lava</div>
+              <div class="cell e">·</div><div class="cell f">Ouro</div><div class="cell e">·</div>
+              <div class="cell f">Balde Lava</div><div class="cell e">·</div><div class="cell f">Ouro</div>
+            </div>
+          </div>
+          <div class="recipe">
+            <h4>Sela <span style="color:var(--com)">· Cavaleiro</span></h4>
+            <div class="yield">→ 1 Sela</div>
+            <div class="craftgrid">
+              <div class="cell f">Couro</div><div class="cell f">Couro</div><div class="cell f">Couro</div>
+              <div class="cell f">Couro</div><div class="cell e">·</div><div class="cell f">Couro</div>
+              <div class="cell f">Ferro</div><div class="cell e">·</div><div class="cell f">Ferro</div>
+            </div>
+          </div>
+          <div class="recipe">
+            <h4>Laço <span style="color:var(--com)">· Cavaleiro</span></h4>
+            <div class="yield">→ 2 Laços</div>
+            <div class="craftgrid">
+              <div class="cell f">Linha</div><div class="cell f">Linha</div><div class="cell e">·</div>
+              <div class="cell f">Linha</div><div class="cell f">Ferro</div><div class="cell e">·</div>
+              <div class="cell e">·</div><div class="cell e">·</div><div class="cell f">Linha</div>
+            </div>
+          </div>
+          <div class="recipe">
+            <h4>Cota de Malha <span style="color:var(--art)">· Artesão</span></h4>
+            <div class="yield">→ Capacete (peças com Corrente)</div>
+            <div class="craftgrid h2">
+              <div class="cell f">Corrente</div><div class="cell f">Corrente</div><div class="cell f">Corrente</div>
+              <div class="cell f">Corrente</div><div class="cell e">·</div><div class="cell f">Corrente</div>
+            </div>
+          </div>
+          <div class="recipe">
+            <h4>Armadura de Cavalo (metal) <span style="color:var(--art)">· Ferreiro</span></h4>
+            <div class="yield">→ formato "H" · M = ferro / ouro / diamante</div>
+            <div class="craftgrid">
+              <div class="cell f">M</div><div class="cell e">·</div><div class="cell f">M</div>
+              <div class="cell f">M</div><div class="cell f">M</div><div class="cell f">M</div>
+              <div class="cell f">M</div><div class="cell e">·</div><div class="cell f">M</div>
+            </div>
+          </div>
+        </div>
+        <div class="prose">
+          <h3>Outras receitas</h3>
+          <ul>
+            <li><strong>Linha</strong> (Fazendeiro): 1 bloco de Lã (qualquer cor) → 4 Linhas, sem forma.</li>
+            <li><strong>Trilho</strong> — rende <strong>16</strong> por receita para o Minerador, <strong>32</strong> para o Artesão (e Ferreiro/Engenheiro herdam o dobrado).</li>
+          </ul>
+          <h3>Fundição de minério (regra especial)</h3>
+          <p>Minério bruto e minério-bloco <strong>não fundem na fornalha comum</strong> — só no <strong>Alto-forno</strong>. Bloqueados na fornalha comum: <span class="mono">raw_iron/gold/copper</span>, <span class="mono">iron/gold/copper_ore</span> e variantes <em>deepslate</em>/<em>nether</em>. Isso reforça o papel do Minerador e do Ferreiro.</p>
+        </div>
+      </div>
+
+      <!-- ESTAÇÕES -->
+      <div class="refblock" data-ref="estacoes" hidden>
+        <h2 class="stage-title">Estações de trabalho</h2>
+        <div class="prose">
+          <p>Algumas estações só abrem para os papéis certos. Há três níveis: <strong>pleno</strong> (sem restrição), <strong>limitado</strong> (capacidade reduzida) e sem acesso (não abre, com aviso). Blocos não listados são livres para todos.</p>
+          <table class="ref">
+            <thead><tr><th>Estação</th><th>Acesso pleno</th><th>Acesso limitado</th></tr></thead>
+            <tbody>
+              <tr><td>Alto-forno</td><td>Ferreiro</td><td>Artesão (e Ferreiro/Engenheiro) — só até o ferro</td></tr>
+              <tr><td>Bancada de Ferraria</td><td>Ferreiro</td><td>—</td></tr>
+              <tr><td>Bigorna (e variantes)</td><td>Ferreiro</td><td>Feiticeiro (só usa)</td></tr>
+              <tr><td>Mesa de Encantamentos</td><td>Feiticeiro</td><td>Sábio (e Feiticeiro/Alquimista)</td></tr>
+              <tr><td>Suporte de Poções</td><td>Alquimista</td><td>Sábio (e Feiticeiro/Alquimista)</td></tr>
+              <tr><td>Cortador de Pedras</td><td>Minerador</td><td>—</td></tr>
+              <tr><td>Tear</td><td>Fazendeiro</td><td>—</td></tr>
+            </tbody>
+          </table>
+          <h3>Alto-forno — o que "limitado" significa</h3>
+          <p>O Ferreiro funde qualquer metal. O Artesão funde <strong>até o ferro</strong> (ferro e cobre). Bloqueado para o Artesão: ouro (bruto, minério e variantes), <strong>Destroços Antigos</strong> (Netherite) e reciclagem de equipamento de ouro. Se ele tentar, a fundição não acontece e não gasta combustível.</p>
+          <h3>Mesa de Encantamentos — Sábio / Feiticeiro</h3>
+          <p>O <strong>Feiticeiro</strong> encanta tudo: nível II+ e encantamentos raros/tesouro. O <strong>Sábio</strong> só faz comuns, clampados ao nível I; os raros somem da oferta. Raros reservados ao Feiticeiro: Remendo, Toque Suave, Infinidade, Multidisparo, Canalização, Caminhante Gélido, Velocidade das Almas, Esgueirar-se Veloz, Maldição da Ligadura, Maldição do Desaparecimento e todos os de tesouro.</p>
+          <h3>Suporte de Poções — Sábio / Alquimista</h3>
+          <p>O <strong>Sábio</strong> conclui poções bebíveis básicas, nível I, duração normal (Água, Mundana, Cura, Força, Rapidez, Salto, Resistência a Fogo, Respiração Aquática, Visão Noturna, Veneno, Regeneração, Fraqueza...). O <strong>Alquimista</strong> faz todo o resto: arremessáveis (splash/lingering), flechas com ponta, nível II ("fortes"), prolongadas e tipos avançados (Invisibilidade, Dano Instantâneo, Queda Lenta, Mestre Tartaruga, Lentidão IV).</p>
+          <div class="callout">Tanto para encantar quanto para poções, o Sábio consegue <strong>abrir</strong> a estação mas só conclui o tier básico; o especialista é quem faz o avançado.</div>
+        </div>
+      </div>
+
+      <!-- EFEITOS -->
+      <div class="refblock" data-ref="efeitos" hidden>
+        <h2 class="stage-title">Efeitos</h2>
+        <div class="prose">
+          <p>O mod aplica bônus e penalidades conforme o que você segura, veste ou monta. Os efeitos são recalculados a cada segundo e ficam travados em ~5s, renovados continuamente. Aparecem como ícones de efeito (estilo beacon, sem partículas).</p>
+          <h3>Bônus dos Coletores (com a própria ferramenta)</h3>
+          <table class="ref">
+            <thead><tr><th>Papel</th><th>Ferramenta</th><th>Efeito</th></tr></thead>
+            <tbody>
+              <tr><td>Minerador</td><td>Picareta</td><td>Pressa I + Força I</td></tr>
+              <tr><td>Lenhador</td><td>Machado</td><td>Pressa I + Força I</td></tr>
+              <tr><td>Fazendeiro</td><td>Enxada</td><td>Pressa I + Força I</td></tr>
+            </tbody>
+          </table>
+          <h3>Bônus do Combatente</h3>
+          <table class="ref">
+            <thead><tr><th>Situação</th><th>Efeito</th></tr></thead>
+            <tbody>
+              <tr><td>Cavaleiro montado num cavalo</td><td>Resistência I + Absorção I</td></tr>
+              <tr><td>Arqueiro segurando Arco ou Besta</td><td>Resistência I + Velocidade I</td></tr>
+              <tr><td>Combatente segurando Machado ou Espada</td><td>Neutro — sem efeito e sem penalidade</td></tr>
+            </tbody>
+          </table>
+          <h3>Penalidades</h3>
+          <table class="ref">
+            <thead><tr><th>Situação</th><th>Penalidade</th></tr></thead>
+            <tbody>
+              <tr><td>Não-Coletor com Picareta, Pá ou Enxada</td><td>Fraqueza I + Lentidão I + Fadiga II</td></tr>
+              <tr><td>Não-Coletor e não-Combatente com Machado</td><td>Fraqueza I + Lentidão I + Fadiga II</td></tr>
+              <tr><td>Não-Combatente com Espada de metal (ferro+)</td><td>Fraqueza I + Lentidão I</td></tr>
+              <tr><td>Não-Combatente com armadura acima da Cota de Malha</td><td>Lentidão II + Fraqueza I</td></tr>
+              <tr><td>Sábio (grupo) com Arco, Besta ou Vara de Pesca</td><td>Lentidão I</td></tr>
+            </tbody>
+          </table>
+          <h3>Detalhes importantes</h3>
+          <ul>
+            <li><strong>Vagabundo</strong> com ferramenta de madeira ou pedra <strong>não</strong> sofre penalidade — só é penalizado com ferro+.</li>
+            <li><strong>Machado</strong> penaliza como picareta/enxada, exceto para o grupo Combatente (arma) e o Lenhador (bônus).</li>
+            <li><strong>Pá</strong> entra no conjunto de penalidade, mas não dá bônus a ninguém — Coletores apenas não sofrem.</li>
+            <li>A <strong>Cota de Malha</strong> é o teto de armadura sem penalidade para não-Combatentes.</li>
+          </ul>
+          <div class="callout">Penalidade extra do Sábio: <strong>projéteis disparados por membros do grupo Sábio causam metade do dano</strong>. Sábios não são atiradores.</div>
+        </div>
+      </div>
+
+      <!-- DROPS -->
+      <div class="refblock" data-ref="drops" hidden>
+        <h2 class="stage-title">Drops</h2>
+        <div class="prose">
+          <p>O mod escala os drops conforme o papel: o especialista certo colhe o dobro, a base colhe o normal, o "irmão" do grupo colhe metade e quem está de fora colhe quase nada. Vale só para categorias específicas; o resto do jogo dropa normalmente.</p>
+          <table class="ref">
+            <thead><tr><th>Quem</th><th>Fator</th><th>Na prática</th></tr></thead>
+            <tbody>
+              <tr><td>Especialista da categoria</td><td><span class="cost">200%</span></td><td>Dobra o drop</td></tr>
+              <tr><td>Base do grupo</td><td><span class="v100">100%</span></td><td>Igual ao vanilla</td></tr>
+              <tr><td>Irmão do grupo</td><td><span class="v50">50%</span></td><td>Metade</td></tr>
+              <tr><td>Fora do grupo</td><td><span class="v10">10%</span></td><td>Quase nada</td></tr>
+            </tbody>
+          </table>
+          <p>O degrau de <strong>50% (irmão)</strong> só aparece no grupo <strong>Coletor</strong>, que tem várias atividades. O Combatente tem só uma categoria (hostis), então Cavaleiro e Arqueiro são ambos especialistas (200%).</p>
+          <h3>Exceções de sobrevivência (animais)</h3>
+          <ul>
+            <li><strong>Vagabundo:</strong> 100% em animais (e 50% nas demais atividades).</li>
+            <li><strong>Fora do grupo Coletor:</strong> piso de 50% em animais (em vez de 10%) — ninguém precisa dizimar o rebanho para comer.</li>
+            <li>Plantações não têm esse piso (são renováveis).</li>
+          </ul>
+          <h3>As 5 categorias</h3>
+          <table class="ref">
+            <thead><tr><th>Categoria</th><th>Base</th><th>Especialista</th></tr></thead>
+            <tbody>
+              <tr><td>Minério (todos os <span class="mono">_ore</span> + Destroços Antigos)</td><td>Coletor</td><td>Minerador</td></tr>
+              <tr><td>Madeira (<span class="mono">_log/_wood/_stem/_hyphae/_leaves</span>)</td><td>Coletor</td><td>Lenhador</td></tr>
+              <tr><td>Animais (ovelha, vaca, porco, galinha, coelho, mooshroom)</td><td>Coletor</td><td>Fazendeiro</td></tr>
+              <tr><td>Plantações (trigo, cenoura, batata, beterraba, melancia, abóbora...)</td><td>Coletor</td><td>Fazendeiro</td></tr>
+              <tr><td>Hostis (creeper, zumbi, esqueleto, blaze, enderman...)</td><td>Combatente</td><td>Cavaleiro / Arqueiro</td></tr>
+            </tbody>
+          </table>
+          <p>Tudo o que não está nessas listas dropa normalmente para qualquer papel. Drops por TNT/explosão (sem jogador no contexto) não são escalados.</p>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="refblock" data-ref="faq" hidden>
+        <h2 class="stage-title">FAQ</h2>
+        <div class="prose">
+          <h3>Como descubro e troco meu papel?</h3>
+          <p>Use <code>/role</code> (ou <code>/r</code>) para ver papel e transições; <code>/role set &lt;papel&gt;</code> para trocar.</p>
+          <h3>Tentei fabricar algo e o item sumiu da grade. Por quê?</h3>
+          <p>Aquele item é exclusivo de outro papel. O resultado é zerado e aparece um aviso no chat.</p>
+          <h3>Uma estação não abre para mim.</h3>
+          <p>Ela é restrita ao seu papel — veja Estações de trabalho.</p>
+          <h3>Sou Artesão e não consigo fundir ouro/netherite.</h3>
+          <p>Correto: o Artesão funde só até o ferro (ferro e cobre). Ouro e a linha do Netherite exigem o Ferreiro.</p>
+          <h3>Estou com Fraqueza/Lentidão/Fadiga sem motivo.</h3>
+          <p>Você está segurando uma ferramenta que seu papel não domina, ou vestindo armadura acima da Cota de Malha sendo não-Combatente.</p>
+          <h3>Minhas flechas estão fracas.</h3>
+          <p>Se você é do grupo Sábio, seus projéteis causam metade do dano. Troque para um papel de combate se quiser atirar.</p>
+          <h3>Meus drops caíram muito.</h3>
+          <p>A escala depende do papel: especialista 200%, base 100%, irmão 50%, fora ~10%. Veja Drops.</p>
+          <h3>Mudar de papel apaga meu progresso?</h3>
+          <p>Não. Só cobra níveis de XP e troca permissões. Itens e mundo não mudam. Papéis são salvos por UUID.</p>
+          <h3>Por que trocar de grupo é tão caro?</h3>
+          <p>Não há atalho base → outra base: você passa pelo Vagabundo. É proposital — especializar-se e comerciar é mais eficiente.</p>
+          <h3>O Vagabundo é inútil?</h3>
+          <p>Não. Sem penalidade com madeira/pedra, 100% dos drops de animais e 50% nas demais. Bom para começar e juntar XP.</p>
+          <h3>Como ganho XP jogando?</h3>
+          <p>Pelas formas normais (fundição, mobs, minérios). Além disso, o Lenhador ganha um pouco de XP ao cortar troncos — exclusivo dele.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<footer>OFÍCIOS · WIKI INTERATIVA · 14 PAPÉIS · 4 GRUPOS · UM PRINCÍPIO: ESPECIALIZE-SE E TROQUE</footer>
+
+<script>
+/* ============================ DADOS ============================ */
+const GRP = {
+  coletor:   {name:'Coletor',    cls:'g-col', cssvar:'--col'},
+  artesao:   {name:'Artesão',    cls:'g-art', cssvar:'--art'},
+  sabio:     {name:'Sábio',      cls:'g-sab', cssvar:'--sab'},
+  combatente:{name:'Combatente', cls:'g-com', cssvar:'--com'},
+  vagabundo: {name:'—',          cls:'g-vag', cssvar:'--vag'}
+};
+
+const ROLES = {
+  vagabundo:{
+    name:'Vagabundo', id:'vagabundo', type:'Estado inicial', group:'vagabundo',
+    summary:'Aprendiz sem ofício. Sobrevive sem penalidade com madeira ou pedra enquanto decide o caminho.',
+    cost:'Você começa aqui', path:['Estado inicial de todo jogador.'],
+    heranca:'Só tem o que é liberado explicitamente ao Vagabundo.',
+    fabricaExcl:[{t:'Vara de Pesca', tag:'compartilhada c/ Coletor'}],
+    fabricaHerd:[],
+    estacoes:[],
+    bonus:[], pen:['Sem penalidade com madeira/pedra; só sofre com ferro+'],
+    drops:{minerio:50,madeira:50,animais:100,plantacoes:50,hostis:50},
+    dropNote:'Pisos de sobrevivência: 100% em animais, 50% no resto, para não passar fome.'
+  },
+  coletor:{
+    name:'Coletor', id:'coletor', type:'Base', group:'coletor',
+    summary:'A base da coleta. Amplitude sobre profundidade: fabrica as três ferramentas de pedra e colhe o normal em tudo do grupo.',
+    cost:'5', path:['Vagabundo → Coletor: 5 níveis'],
+    heranca:'Tudo que o Coletor fabrica é herdado por Minerador, Lenhador e Fazendeiro.',
+    fabricaExcl:[{t:'Vara de Pesca'},{t:'Andaime'},{t:'Picareta, Machado e Enxada de pedra', tag:'regra exata'}],
+    fabricaHerd:[],
+    estacoes:[],
+    bonus:[], pen:['Espada de metal → Fraqueza I + Lentidão I','Armadura acima da Cota de Malha → Lentidão II + Fraqueza I'],
+    drops:{minerio:100,madeira:100,animais:100,plantacoes:100,hostis:10},
+    dropNote:'O generalista não é punido: 100% em todas as categorias do grupo Coletor.'
+  },
+  minerador:{
+    name:'Minerador', id:'minerador', type:'Especialista', group:'coletor',
+    summary:'O especialista do subsolo. Dobra o minério e domina a picareta, a dinamite e os trilhos.',
+    cost:'20', path:['Vagabundo → Coletor: 5','Coletor → Minerador: 15'],
+    heranca:'Herda tudo do Coletor. A picareta de pedra é exclusiva — não herda machado nem enxada dos irmãos.',
+    fabricaExcl:[{t:'Picareta de Pedra', tag:'só ela'},{t:'Dinamite (TNT)', tag:'c/ Engenheiro'},{t:'Carrinho de Mina com Dinamite'},{t:'Cortador de Pedras'},{t:'Trilho', tag:'16/receita'},{t:'Blocos de minério', tag:'c/ Ferreiro'}],
+    fabricaHerd:[{t:'Vara de Pesca'},{t:'Andaime'}],
+    estacoes:[{n:'Cortador de Pedras', acc:'pleno'}],
+    bonus:['Picareta na mão → Pressa I + Força I'], pen:['Espada de metal → Fraqueza I + Lentidão I','Armadura pesada → Lentidão II + Fraqueza I'],
+    drops:{minerio:200,madeira:50,animais:50,plantacoes:50,hostis:10},
+    dropNote:'Dobra o minério; metade nas outras atividades Coletor (irmão).'
+  },
+  lenhador:{
+    name:'Lenhador', id:'lenhador', type:'Especialista', group:'coletor',
+    summary:'O especialista da floresta. Dobra a madeira, domina o machado e ainda ganha XP cortando troncos.',
+    cost:'20', path:['Vagabundo → Coletor: 5','Coletor → Lenhador: 15'],
+    heranca:'Herda tudo do Coletor. O machado de pedra é exclusivo — não herda picareta nem enxada.',
+    fabricaExcl:[{t:'Machado de Pedra', tag:'só ele'},{t:'Alçapões de madeira', tag:'todos os tipos'}],
+    fabricaHerd:[{t:'Vara de Pesca'},{t:'Andaime'}],
+    estacoes:[],
+    bonus:['Machado na mão → Pressa I + Força I','Ganha XP ao cortar troncos (exclusivo)'], pen:['Espada de metal → Fraqueza I + Lentidão I','Armadura pesada → Lentidão II + Fraqueza I'],
+    drops:{minerio:50,madeira:200,animais:50,plantacoes:50,hostis:10},
+    dropNote:'Dobra a madeira; metade nas outras atividades Coletor (irmão).'
+  },
+  fazendeiro:{
+    name:'Fazendeiro', id:'fazendeiro', type:'Especialista', group:'coletor',
+    summary:'O especialista do campo. Dobra animais e plantações; domina a enxada, o tear e a apicultura.',
+    cost:'20', path:['Vagabundo → Coletor: 5','Coletor → Fazendeiro: 15'],
+    heranca:'Herda tudo do Coletor. A enxada de pedra é exclusiva — não herda picareta nem machado.',
+    fabricaExcl:[{t:'Enxada de Pedra', tag:'só ele'},{t:'Compositor'},{t:'Colmeia'},{t:'Linha', tag:'receita nova'}],
+    fabricaHerd:[{t:'Vara de Pesca'},{t:'Andaime'}],
+    estacoes:[{n:'Tear', acc:'pleno'}],
+    bonus:['Enxada na mão → Pressa I + Força I'], pen:['Espada de metal → Fraqueza I + Lentidão I','Armadura pesada → Lentidão II + Fraqueza I'],
+    drops:{minerio:50,madeira:50,animais:200,plantacoes:200,hostis:10},
+    dropNote:'Único especialista de duas categorias: dobra animais e plantações.'
+  },
+  artesao:{
+    name:'Artesão', id:'artesao', type:'Base', group:'artesao',
+    summary:'A base da manufatura. Transforma metal em ferramentas, blocos e utilidades — até o ferro.',
+    cost:'10', path:['Vagabundo → Artesão: 10 níveis'],
+    heranca:'Tudo que o Artesão fabrica é herdado por Ferreiro e Engenheiro.',
+    fabricaExcl:[{t:'Cota de Malha (capacete, peitoral, calças, botas)'},{t:'Ferramentas de ferro'},{t:'Vidro, Sino, Balde, Tesoura, Corrente'},{t:'Grades de Ferro, Porta de Ferro, Alçapão de Ferro'},{t:'Para-raios, Caldeirão, Rebolo, Lanterna'},{t:'Alto-forno, Carrinho de Mina'},{t:'Trilho', tag:'32/receita'}],
+    fabricaHerd:[],
+    estacoes:[{n:'Alto-forno', acc:'lim', note:'só até o ferro (ferro e cobre)'}],
+    bonus:[], pen:['Picareta/Pá/Enxada → Fraqueza+Lentidão+Fadiga II','Machado → Fraqueza+Lentidão+Fadiga II','Espada de metal → Fraqueza I + Lentidão I','Armadura acima da Cota de Malha → Lentidão II + Fraqueza I'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:10},
+    dropNote:'O Artesão não tem categoria de drop própria — quase nada fora; animais com piso de 50%.'
+  },
+  ferreiro:{
+    name:'Ferreiro', id:'ferreiro', type:'Especialista', group:'artesao',
+    summary:'O mestre do metal. Único a forjar ouro, diamante e netherite, armaduras e a Bancada de Ferraria.',
+    cost:'25', path:['Vagabundo → Artesão: 10','Artesão → Ferreiro: 15'],
+    heranca:'Herda tudo do Artesão (ferramentas de ferro, blocos, estações). O exclusivo abaixo não passa ao Engenheiro.',
+    fabricaExcl:[{t:'Bigorna, Bancada de Ferraria'},{t:'Bloco e Lingote de Netherite'},{t:'Ferramentas de ouro, diamante e netherite'},{t:'Armaduras de metal (todas as peças)'},{t:'Armaduras de cavalo de metal (formato H)'},{t:'Blocos de minério', tag:'c/ Minerador'}],
+    fabricaHerd:[{t:'Tudo do Artesão (ferro, vidro, blocos, etc.)'}],
+    estacoes:[{n:'Alto-forno', acc:'pleno'},{n:'Bancada de Ferraria', acc:'pleno'},{n:'Bigorna', acc:'pleno'}],
+    bonus:[], pen:['Picareta/Pá/Enxada/Machado → Fraqueza+Lentidão+Fadiga II','Espada de metal → Fraqueza I + Lentidão I','Armadura acima da Cota de Malha → Lentidão II + Fraqueza I'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:10},
+    dropNote:'Forja o metal, mas não tem bônus de drop — minério dropa escalado para o Minerador.'
+  },
+  engenheiro:{
+    name:'Engenheiro', id:'engenheiro', type:'Especialista', group:'artesao',
+    summary:'O mestre da máquina. Domina toda a redstone, mecanismos e trilhos especiais.',
+    cost:'30', path:['Vagabundo → Artesão: 10','Artesão → Engenheiro: 20 (exceção)'],
+    heranca:'Herda tudo do Artesão. O exclusivo abaixo não passa ao Ferreiro.',
+    fabricaExcl:[{t:'Redstone: Relógio, Observador, Sensor de Luz, Repetidor, Comparador, Lâmpada, Bloco de Redstone, Pistão, Pistão Pegajoso'},{t:'Mecanismos: Baú Armadilha, Gancho de Fio de Armar, Placas de Pressão de Peso, Bloco Musical, Jukebox, Dropper, Funil, Ejetor'},{t:'Trilhos especiais: Detector, Ativador, Energizado'},{t:'Foguete, Bússola, Luneta'},{t:'Dinamite (TNT)', tag:'c/ Minerador'}],
+    fabricaHerd:[{t:'Tudo do Artesão (ferro, vidro, blocos, etc.)'}],
+    estacoes:[{n:'Alto-forno', acc:'lim', note:'herdado do Artesão — só até o ferro'}],
+    bonus:[], pen:['Picareta/Pá/Enxada/Machado → Fraqueza+Lentidão+Fadiga II','Espada de metal → Fraqueza I + Lentidão I','Armadura acima da Cota de Malha → Lentidão II + Fraqueza I'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:10},
+    dropNote:'Sem categoria de drop própria; animais com piso de 50%.'
+  },
+  sabio:{
+    name:'Sábio', id:'sabio', type:'Base', group:'sabio',
+    summary:'A base do conhecimento. Abre encantamento e poção, mas só conclui o tier básico.',
+    cost:'15', path:['Vagabundo → Sábio: 15 níveis'],
+    heranca:'Tudo que o Sábio fabrica é herdado por Feiticeiro e Alquimista.',
+    fabricaExcl:[{t:'Fatia de Melância Reluzente'},{t:'Cenoura Dourada'},{t:'Lanterna das Almas'}],
+    fabricaHerd:[],
+    estacoes:[{n:'Mesa de Encantamentos', acc:'lim', note:'só comuns, clampados ao nível I'},{n:'Suporte de Poções', acc:'lim', note:'só bebíveis básicas, nível I'}],
+    bonus:[], pen:['Arco, Besta ou Vara de Pesca → Lentidão I','Projéteis causam metade do dano','Penalidades gerais de ferramenta/armadura (não-Coletor)'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:10},
+    dropNote:'Sem categoria de drop própria; animais com piso de 50%. Sábios não são atiradores.'
+  },
+  feiticeiro:{
+    name:'Feiticeiro', id:'feiticeiro', type:'Especialista', group:'sabio',
+    summary:'O encantador. Desbloqueia encantamentos raros, de tesouro e nível II+.',
+    cost:'30', path:['Vagabundo → Sábio: 15','Sábio → Feiticeiro: 15'],
+    heranca:'Herda tudo do Sábio. O Baú do Fim é exclusivo dele.',
+    fabricaExcl:[{t:'Baú do Fim'}],
+    fabricaHerd:[{t:'Melância Reluzente, Cenoura Dourada, Lanterna das Almas'}],
+    estacoes:[{n:'Mesa de Encantamentos', acc:'pleno', note:'nível II+ e raros/tesouro'},{n:'Bigorna', acc:'lim', note:'só usa'},{n:'Suporte de Poções', acc:'lim', note:'tier básico, herdado do Sábio'}],
+    bonus:[], pen:['Projéteis causam metade do dano (grupo Sábio)','Arco/Besta/Vara de Pesca → Lentidão I','Penalidades gerais de ferramenta/armadura'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:10},
+    dropNote:'Sem categoria de drop própria; animais com piso de 50%.'
+  },
+  alquimista:{
+    name:'Alquimista', id:'alquimista', type:'Especialista', group:'sabio',
+    summary:'O poções. Faz arremessáveis, flechas com ponta, nível II e versões prolongadas.',
+    cost:'30', path:['Vagabundo → Sábio: 15','Sábio → Alquimista: 15'],
+    heranca:'Herda tudo do Sábio. As receitas abaixo são exclusivas dele.',
+    fabricaExcl:[{t:'Verruga do Nether', tag:'receita nova'},{t:'Vara de Blaze', tag:'receita nova'},{t:'Olho do Fim'},{t:'Maçã Dourada'}],
+    fabricaHerd:[{t:'Melância Reluzente, Cenoura Dourada, Lanterna das Almas'}],
+    estacoes:[{n:'Suporte de Poções', acc:'pleno', note:'arremessáveis, flechas, nível II, prolongadas'},{n:'Mesa de Encantamentos', acc:'lim', note:'tier básico, herdado do Sábio'}],
+    bonus:[], pen:['Projéteis causam metade do dano (grupo Sábio)','Arco/Besta/Vara de Pesca → Lentidão I','Penalidades gerais de ferramenta/armadura'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:10},
+    dropNote:'Sem categoria de drop própria; animais com piso de 50%.'
+  },
+  combatente:{
+    name:'Combatente', id:'combatente', type:'Base', group:'combatente',
+    summary:'A base da guerra. Maneja machado e espada sem penalidade; sua força está no combate, não na bancada.',
+    cost:'5', path:['Vagabundo → Combatente: 5 níveis'],
+    heranca:'O que vale para o Combatente é herdado por Cavaleiro e Arqueiro.',
+    fabricaExcl:[{t:'Nenhuma fabricação exclusiva — a força é combate, efeitos e drops'}],
+    fabricaHerd:[],
+    estacoes:[],
+    bonus:['Machado e Espada → neutros (sem efeito e sem penalidade)'], pen:['Picareta/Pá/Enxada → Fraqueza+Lentidão+Fadiga II'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:100},
+    dropNote:'Base de hostis: 100%. Pode usar armadura pesada sem penalidade.'
+  },
+  cavaleiro:{
+    name:'Cavaleiro', id:'cavaleiro', type:'Especialista', group:'combatente',
+    summary:'O cavaleiro montado. Sela, laço e armadura de cavalo; resistência e absorção em cima do cavalo.',
+    cost:'20', path:['Vagabundo → Combatente: 5','Combatente → Cavaleiro: 15'],
+    heranca:'Herda tudo do Combatente. As receitas de montaria abaixo são exclusivas.',
+    fabricaExcl:[{t:'Sela', tag:'receita nova'},{t:'Laço', tag:'receita nova'},{t:'Armadura de Couro para Cavalo'}],
+    fabricaHerd:[],
+    estacoes:[],
+    bonus:['Montado num cavalo → Resistência I + Absorção I','Machado e Espada → neutros'], pen:['Picareta/Pá/Enxada → Fraqueza+Lentidão+Fadiga II'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:200},
+    dropNote:'Dobra os hostis (200%) — sem degrau de "irmão", pois o grupo tem uma só categoria.'
+  },
+  arqueiro:{
+    name:'Arqueiro', id:'arqueiro', type:'Especialista', group:'combatente',
+    summary:'O atirador. Arco, flecha e besta; resistência e velocidade com a arma em punho.',
+    cost:'20', path:['Vagabundo → Combatente: 5','Combatente → Arqueiro: 15'],
+    heranca:'Herda tudo do Combatente. As receitas de tiro abaixo são exclusivas.',
+    fabricaExcl:[{t:'Arco'},{t:'Flecha'},{t:'Besta'},{t:'Alvo'}],
+    fabricaHerd:[],
+    estacoes:[],
+    bonus:['Segurando Arco ou Besta → Resistência I + Velocidade I','Machado e Espada → neutros'], pen:['Picareta/Pá/Enxada → Fraqueza+Lentidão+Fadiga II'],
+    drops:{minerio:10,madeira:10,animais:50,plantacoes:10,hostis:200},
+    dropNote:'Dobra os hostis (200%) — sem degrau de "irmão", pois o grupo tem uma só categoria.'
+  }
+};
+
+/* ============================ RENDER ============================ */
+const stage = {tree:document.getElementById('view-tree'), role:document.getElementById('view-role'), ref:document.getElementById('view-ref')};
+const refBlocks = document.querySelectorAll('#view-ref .refblock');
+const toast = document.getElementById('toast');
+
+function showView(which){
+  Object.values(stage).forEach(v=>v.classList.remove('show'));
+  stage[which].classList.add('show');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function dropTier(v){ return v>=200?'200':v>=100?'100':v>=50?'50':'10'; }
+
+function li(arr, cls){
+  if(!arr || !arr.length) return '<span class="none">— nenhum —</span>';
+  return '<ul class="clean '+(cls||'')+'">'+arr.map(x=>{
+    if(typeof x==='string') return '<li>'+x+'</li>';
+    return '<li>'+x.t+(x.tag?'<span class="tag">'+x.tag+'</span>':'')+'</li>';
+  }).join('')+'</ul>';
+}
+
+function renderRole(idKey){
+  const r = ROLES[idKey]; if(!r) return;
+  const g = GRP[r.group];
+  const cats = [['minerio','Minério'],['madeira','Madeira'],['animais','Animais'],['plantacoes','Plantações'],['hostis','Hostis']];
+  const dropsHTML = cats.map(([k,label])=>{
+    const v = r.drops[k]; const t = dropTier(v);
+    const w = Math.min(100, v/2); /* 200% -> 100% width */
+    return '<div class="drop"><span class="dl">'+label+'</span>'+
+      '<span class="track"><span class="fill t'+t+'" style="width:'+w+'%"></span></span>'+
+      '<span class="dv v'+t+'">'+v+'%</span></div>';
+  }).join('');
+
+  const stationsHTML = r.estacoes.length ? '<div class="stations">'+r.estacoes.map(s=>
+    '<div class="stn"><span class="acc '+(s.acc==='pleno'?'pleno':'lim')+'">'+(s.acc==='pleno'?'pleno':'limitado')+'</span>'+
+    '<span>'+s.n+(s.note?' <span class="tag">'+s.note+'</span>':'')+'</span></div>').join('')+'</div>'
+    : '<span class="none">— nenhuma estação restrita —</span>';
+
+  stage.role.style.setProperty('--gc', 'var('+g.cssvar+')');
+  stage.role.innerHTML =
+  '<button class="navbtn home" style="margin:-6px 0 18px;display:inline-flex" onclick="goTree()"><span class="ic">←</span> Voltar à árvore</button>'+
+  '<div class="role-head">'+
+    '<h2 class="role-name">'+r.name+'</h2>'+
+    '<span class="badge">'+r.type+'</span>'+
+    (r.group!=='vagabundo'?'<span class="badge grp" style="background:var('+g.cssvar+')">'+g.name+'</span>':'')+
+    '<span class="role-id" title="Clique para copiar" data-copy="/role set '+r.id+'"><span class="lbl">/role set</span> '+r.id+'</span>'+
+  '</div>'+
+  '<p class="role-summary">'+r.summary+'</p>'+
+  '<div class="grid">'+
+    '<div class="card"><h3><span class="ic">↑</span> Progressão</h3>'+
+      '<div class="progline"><span class="k">Do zero</span><span class="cost">'+r.cost+(r.id!=='vagabundo'?' níveis':'')+'</span></div>'+
+      '<div class="sub">Como chegar</div>'+ li(r.path) +
+      '<div class="note">'+r.heranca+'</div>'+
+    '</div>'+
+    '<div class="card"><h3><span class="ic">⚒</span> Fabricação</h3>'+
+      '<div class="sub">Exclusivo deste papel</div>'+ li(r.fabricaExcl) +
+      '<div class="sub">Herdado da base</div>'+ li(r.fabricaHerd,'muted') +
+    '</div>'+
+    '<div class="card"><h3><span class="ic">⌗</span> Estações</h3>'+ stationsHTML +'</div>'+
+    '<div class="card"><h3><span class="ic">✦</span> Efeitos</h3>'+
+      '<div class="sub">Bônus</div>'+ li(r.bonus,'good') +
+      '<div class="sub">Penalidades</div>'+ li(r.pen,'bad') +
+    '</div>'+
+    '<div class="card" style="grid-column:1/-1"><h3><span class="ic">%</span> Drops por categoria</h3>'+
+      '<div class="drops">'+dropsHTML+'</div>'+
+      '<div class="drops-note">'+r.dropNote+'</div>'+
+    '</div>'+
+  '</div>';
+
+  showView('role');
+  setActiveNav(null);
+  document.querySelectorAll('.node').forEach(n=>n.classList.toggle('lit', n.dataset.role===idKey));
+}
+
+/* nav + refs */
+function showRef(key){
+  refBlocks.forEach(b=>b.hidden = b.dataset.ref!==key);
+  showView('ref');
+}
+function setActiveNav(el){
+  document.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+function goTree(){
+  showView('tree'); setActiveNav(document.querySelector('.navbtn[data-view="tree"]'));
+  document.querySelectorAll('.node').forEach(n=>n.classList.remove('lit'));
+  requestAnimationFrame(drawWires);
+}
+
+/* ============================ EVENTS ============================ */
+document.querySelectorAll('.node').forEach(n=>{
+  n.addEventListener('click', ()=>renderRole(n.dataset.role));
+  n.addEventListener('mouseenter', ()=>litePath(n.dataset.role));
+  n.addEventListener('mouseleave', ()=>litePath(null));
+  n.addEventListener('focus', ()=>litePath(n.dataset.role));
+});
+document.querySelectorAll('.navbtn').forEach(b=>{
+  b.addEventListener('click', ()=>{
+    if(b.dataset.view==='tree'){ goTree(); }
+    else if(b.dataset.ref){ setActiveNav(b); showRef(b.dataset.ref); }
+  });
+});
+document.addEventListener('click', e=>{
+  const c = e.target.closest('[data-copy]');
+  if(c){ navigator.clipboard?.writeText(c.dataset.copy); flash('Copiado: '+c.dataset.copy); }
+});
+function flash(msg){ toast.textContent=msg; toast.classList.add('show'); clearTimeout(flash._t); flash._t=setTimeout(()=>toast.classList.remove('show'),1600); }
+
+/* ============================ TREE WIRES ============================ */
+const EDGES = [
+  ['vagabundo','coletor'],['vagabundo','artesao'],['vagabundo','sabio'],['vagabundo','combatente'],
+  ['coletor','minerador'],['coletor','lenhador'],['coletor','fazendeiro'],
+  ['artesao','ferreiro'],['artesao','engenheiro'],
+  ['sabio','feiticeiro'],['sabio','alquimista'],
+  ['combatente','cavaleiro'],['combatente','arqueiro']
+];
+const GCOLOR = {coletor:'--col',artesao:'--art',sabio:'--sab',combatente:'--com',vagabundo:'--vag',
+  minerador:'--col',lenhador:'--col',fazendeiro:'--col',ferreiro:'--art',engenheiro:'--art',
+  feiticeiro:'--sab',alquimista:'--sab',cavaleiro:'--com',arqueiro:'--com'};
+const svg = document.getElementById('wires');
+const treeEl = document.getElementById('tree');
+const gridEl = document.querySelector('.htree');
+
+function anchor(role, side){
+  const el = document.querySelector('.node[data-role="'+role+'"]');
+  const tr = gridEl.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  return {x: (side==='right'? r.right : r.left) - tr.left, y: r.top - tr.top + r.height/2};
+}
+function drawWires(){
+  const tr = gridEl.getBoundingClientRect();
+  svg.setAttribute('viewBox','0 0 '+tr.width+' '+tr.height);
+  svg.innerHTML = '';
+  EDGES.forEach(([a,b])=>{
+    const p1 = anchor(a,'right'), p2 = anchor(b,'left');
+    const dx = (p2.x - p1.x);
+    const c1x = p1.x + dx*0.5, c2x = p2.x - dx*0.5;
+    const d = 'M '+p1.x+' '+p1.y+' C '+c1x+' '+p1.y+', '+c2x+' '+p2.y+', '+p2.x+' '+p2.y;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', d);
+    path.setAttribute('stroke', 'var('+GCOLOR[b]+')');
+    path.dataset.from=a; path.dataset.to=b;
+    svg.appendChild(path);
+    try{ const L=path.getTotalLength(); path.style.setProperty('--len', L); }catch(e){}
+  });
+}
+function ancestors(role){
+  const chain=[]; let cur=role;
+  const parentOf = {}; EDGES.forEach(([a,b])=>parentOf[b]=a);
+  while(parentOf[cur]){ chain.push([parentOf[cur],cur]); cur=parentOf[cur]; }
+  return chain;
+}
+function litePath(role){
+  const set = new Set();
+  if(role) ancestors(role).forEach(([a,b])=>set.add(a+'>'+b));
+  svg.querySelectorAll('path').forEach(p=>p.classList.toggle('lit', set.has(p.dataset.from+'>'+p.dataset.to)));
+}
+
+/* layout recompute */
+let ro;
+function init(){
+  drawWires();
+  if('ResizeObserver' in window){ ro = new ResizeObserver(()=>drawWires()); ro.observe(gridEl); ro.observe(treeEl); }
+  window.addEventListener('resize', ()=>requestAnimationFrame(drawWires));
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(()=>requestAnimationFrame(drawWires)); }
+  /* stagger node entrance */
+  document.querySelectorAll('.node').forEach((n,i)=>n.style.animationDelay=(i*45)+'ms');
+}
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
