@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bloco Comum — servidor de Minecraft mantido por quem joga</title>
+<meta name="description" content="Servidor comunitário de Minecraft, para contas originais e não-originais. Você não paga pra jogar — paga pra manter o servidor de pé. R$4/mês, sem lucro.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* ====== TROQUE ESTES VALORES ======
+     Nome do projeto: "Bloco Comum"  (no <h1> e no <title>)
+     Convite Discord:  href="#discord"  ->  https://discord.gg/SEU-CONVITE
+     Endereço servidor: data-addr / texto "seu-servidor.exaroton.me"
+     Preço: "R$4"
+  =================================== */
+  :root{
+    --night:#0d0e18;        /* abaixo da bedrock (fundo geral) */
+    --text:#ecebf6; --muted:#9d9aba;
+    --grass:#5fae4e; --grass-d:#3f8a3a;
+    --dirt:#6e4a30; --dirt-d:#4f3422;
+    --stone:#3a3e49; --stone-l:#4c5160;
+    --diamond:#56d3da; --gold:#f2b441;
+    --r:4px; /* cantos quase retos: estética de bloco */
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--night);color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;line-height:1.6;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+  }
+  a{color:inherit}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+
+  /* eyebrow / rótulos em pixel, com MUITA parcimônia */
+  .eyebrow{
+    font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:1px;
+    color:var(--muted);text-transform:uppercase;display:inline-block;margin:0 0 18px;
+  }
+  .stratum-tag{font-family:'Press Start 2P',monospace;font-size:9px;color:rgba(255,255,255,.45);letter-spacing:1px}
+
+  h1{font-family:'Press Start 2P',monospace;line-height:1.35;margin:0;
+    font-size:clamp(26px,6.4vw,52px);text-shadow:0 4px 0 rgba(0,0,0,.45)}
+  h2{font-family:'Press Start 2P',monospace;font-size:clamp(15px,3.2vw,22px);line-height:1.5;margin:0 0 8px}
+  h3{font-size:19px;font-weight:800;margin:0 0 6px}
+  p{margin:0 0 14px;color:#d8d6e8}
+  .muted{color:var(--muted)}
+
+  /* botões em bloco, com "profundidade" (sombra dura = aresta do bloco) */
+  .btn{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:15px;
+    padding:14px 22px;border-radius:var(--r);text-decoration:none;border:0;cursor:pointer;
+    transition:transform .08s ease, box-shadow .08s ease}
+  .btn:active{transform:translateY(3px)}
+  .btn-grass{background:var(--grass);color:#0c2009;box-shadow:0 5px 0 var(--grass-d)}
+  .btn-grass:active{box-shadow:0 2px 0 var(--grass-d)}
+  .btn-ghost{background:transparent;color:var(--text);border:2px solid rgba(255,255,255,.22);
+    font-family:'VT323',monospace;font-size:22px;letter-spacing:.5px;padding:9px 18px}
+  .btn-ghost:hover{border-color:var(--diamond);color:var(--diamond)}
+  .btn-diamond{background:var(--diamond);color:#04282a;box-shadow:0 5px 0 #2f9aa0}
+  .btn-diamond:active{box-shadow:0 2px 0 #2f9aa0}
+  :focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+
+  /* ====== HERO (camada céu / anoitecer) ====== */
+  .hero{position:relative;padding:84px 0 120px;
+    background:
+      radial-gradient(120% 80% at 75% 30%, rgba(86,211,218,.10), transparent 60%),
+      linear-gradient(180deg,#191c34 0%,#241e44 55%,#2b2336 100%);
+    overflow:hidden}
+  .stars{position:absolute;inset:0;pointer-events:none;opacity:.7}
+  .stars i{position:absolute;width:3px;height:3px;background:#fff;border-radius:1px;opacity:.5}
+  .hero-grid{display:grid;grid-template-columns:1.25fr .75fr;gap:32px;align-items:center;position:relative;z-index:2}
+  .hero p.lead{font-size:19px;max-width:30ch;margin-top:20px}
+  .cta-row{display:flex;flex-wrap:wrap;gap:14px;margin-top:26px;align-items:center}
+  .scrollhint{margin-top:46px;font-family:'VT323',monospace;font-size:20px;color:var(--muted)}
+  .scrollhint span{display:inline-block;animation:bob 1.8s ease-in-out infinite}
+
+  /* assinatura: bloco voxel isométrico em CSS puro (nada de IP da Mojang) */
+  .scene{display:flex;justify-content:center;align-items:center;min-height:220px;perspective:900px}
+  .torch{position:absolute;width:260px;height:260px;border-radius:50%;
+    background:radial-gradient(circle,rgba(242,180,65,.28),transparent 65%);filter:blur(4px)}
+  .cube{position:relative;width:130px;height:130px;transform-style:preserve-3d;
+    transform:rotateX(-26deg) rotateY(-42deg);animation:float 5s ease-in-out infinite}
+  .face{position:absolute;width:130px;height:130px;image-rendering:pixelated}
+  .top{background:
+      repeating-linear-gradient(90deg,rgba(0,0,0,.10) 0 16px,transparent 16px 32px),
+      repeating-linear-gradient(0deg,rgba(0,0,0,.10) 0 16px,transparent 16px 32px),
+      linear-gradient(var(--grass),var(--grass-d));
+    transform:rotateX(90deg) translateZ(65px)}
+  .left{background:
+      repeating-linear-gradient(0deg,rgba(0,0,0,.16) 0 16px,transparent 16px 32px),
+      linear-gradient(var(--dirt),var(--dirt-d));
+    transform:rotateY(-90deg) translateZ(65px);filter:brightness(.82)}
+  .right{background:
+      repeating-linear-gradient(0deg,rgba(0,0,0,.12) 0 16px,transparent 16px 32px),
+      linear-gradient(var(--dirt),var(--dirt-d));
+    transform:translateZ(65px)}
+  .right::after{content:"";position:absolute;left:30px;top:64px;width:18px;height:18px;
+    background:var(--diamond);box-shadow:24px 18px 0 var(--diamond),-2px 30px 0 var(--gold);opacity:.9}
+
+  /* ====== camadas (estratos) — descer = cavar mais fundo ====== */
+  .stratum{padding:74px 0;position:relative}
+  .grassband{background:linear-gradient(180deg,#2b2336 0,#274226 12%,#21381f 100%);
+    border-top:6px solid var(--grass)}
+  .dirtband{background:linear-gradient(180deg,#3a2718,#2a1c11);border-top:6px solid #2a1c11}
+  .stoneband{background:linear-gradient(180deg,#33373f,#262a31);border-top:6px solid #262a31}
+  .oreband{background:
+      radial-gradient(60% 50% at 20% 30%,rgba(86,211,218,.10),transparent 60%),
+      radial-gradient(50% 40% at 80% 70%,rgba(86,211,218,.08),transparent 60%),
+      linear-gradient(180deg,#1c2a2c,#13191c);border-top:6px solid var(--diamond)}
+  .bedrock{background:#08090f;padding:48px 0;border-top:6px solid #000}
+
+  /* passos / cards em bloco */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:30px}
+  .step{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.07);border-radius:var(--r);
+    padding:22px;position:relative}
+  .step .n{font-family:'Press Start 2P',monospace;font-size:13px;color:var(--grass);display:block;margin-bottom:14px}
+
+  /* transparência: barra "pra onde vai o dinheiro" */
+  .money{display:grid;grid-template-columns:1fr 1fr;gap:34px;align-items:center;margin-top:28px}
+  .bar{height:30px;border-radius:var(--r);overflow:hidden;display:flex;border:2px solid rgba(0,0,0,.35)}
+  .bar .host{flex:1;background:repeating-linear-gradient(45deg,var(--gold) 0 10px,#d99a2c 10px 20px)}
+  .price{font-family:'Press Start 2P',monospace;font-size:clamp(20px,5vw,34px);color:var(--gold)}
+  .ledger{list-style:none;padding:0;margin:14px 0 0}
+  .ledger li{padding:6px 0;border-bottom:1px dashed rgba(255,255,255,.12);display:flex;justify-content:space-between;gap:12px}
+
+  /* faq / regras em stone */
+  .rules{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:28px}
+  .rule{background:rgba(255,255,255,.04);border-left:4px solid var(--stone-l);padding:16px 18px;border-radius:0 var(--r) var(--r) 0}
+
+  /* bônus / ore */
+  .prize{display:grid;grid-template-columns:.8fr 1.2fr;gap:30px;align-items:center;margin-top:26px}
+  .gem{aspect-ratio:1;max-width:170px;margin:0 auto;background:
+      conic-gradient(from 45deg,#7fe9ef,#37b9c0,#7fe9ef,#37b9c0);
+    clip-path:polygon(50% 0,100% 35%,80% 100%,20% 100%,0 35%);
+    box-shadow:0 0 40px rgba(86,211,218,.4);animation:gem 6s linear infinite}
+  .fair{display:inline-flex;gap:8px;align-items:center;font-family:'VT323',monospace;font-size:20px;
+    color:var(--diamond);background:rgba(86,211,218,.08);border:1px solid rgba(86,211,218,.3);
+    padding:6px 12px;border-radius:var(--r);margin-bottom:12px}
+
+  footer .frow{display:flex;flex-wrap:wrap;gap:22px;justify-content:space-between;align-items:center}
+  .addr{font-family:'VT323',monospace;font-size:24px;color:var(--diamond);
+    background:#05151690;border:1px solid rgba(86,211,218,.25);padding:8px 14px;border-radius:var(--r)}
+  .disclaimer{margin-top:26px;font-size:13px;color:#6f6c88;max-width:62ch}
+
+  .reveal{opacity:0;transform:translateY(22px);transition:opacity .6s ease, transform .6s ease}
+  .reveal.in{opacity:1;transform:none}
+
+  @keyframes float{0%,100%{transform:rotateX(-26deg) rotateY(-42deg) translateY(0)}50%{transform:rotateX(-26deg) rotateY(-42deg) translateY(-12px)}}
+  @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+  @keyframes gem{0%{filter:hue-rotate(0)}100%{filter:hue-rotate(20deg)}}
+
+  @media (max-width:760px){
+    .hero-grid{grid-template-columns:1fr}.scene{order:-1;min-height:180px}
+    .steps,.money,.rules,.prize{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cube,.scrollhint span,.gem{animation:none}
+    html{scroll-behavior:auto}.reveal{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="stars" id="stars" aria-hidden="true"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">Servidor comunitário · original e não-original</span>
+      <h1>Bloco<br>Comum</h1>
+      <p class="lead">Um servidor de Minecraft mantido por quem joga nele. Você não paga pra jogar — paga pra <strong>manter o servidor de pé</strong>.</p>
+      <div class="cta-row">
+        <a class="btn btn-grass" href="#discord">Entrar no Discord →</a>
+        <button class="btn btn-ghost" id="copyAddr" data-addr="seu-servidor.exaroton.me" type="button">📋 seu-servidor.exaroton.me</button>
+      </div>
+      <div class="scrollhint">desça e cave fundo <span>↓</span></div>
+    </div>
+    <div class="scene">
+      <div class="torch" aria-hidden="true"></div>
+      <div class="cube" role="img" aria-label="Bloco de grama e terra estilo voxel">
+        <div class="face top"></div>
+        <div class="face left"></div>
+        <div class="face right"></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== CAMADA: GRAMA — COMO FUNCIONA ===================== -->
+<section class="stratum grassband">
+  <div class="wrap">
+    <span class="stratum-tag">▣ superfície</span>
+    <h2 class="reveal">Como funciona</h2>
+    <p class="reveal muted" style="max-width:54ch">Três passos. Sem burocracia, sem pagar nada pra dar uma olhada primeiro.</p>
+    <div class="steps">
+      <div class="step reveal"><span class="n">01</span>
+        <h3>Entra e vincula</h3>
+        <p class="muted">Entra no nosso Discord e usa <strong>/registrar</strong> com o seu nick. Tendo conta original ou não, tá valendo.</p>
+      </div>
+      <div class="step reveal"><span class="n">02</span>
+        <h3>48h por conta da casa</h3>
+        <p class="muted">Você cai direto na whitelist por 2 dias pra testar o servidor. Liga ele quando quiser com <strong>/ligar</strong>.</p>
+      </div>
+      <div class="step reveal"><span class="n">03</span>
+        <h3>Vira membro</h3>
+        <p class="muted">Curtiu? Use <strong>/assinar</strong>. São <strong>R$4/mês</strong> que vão inteiros pra manter tudo no ar.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CAMADA: TERRA — TRANSPARÊNCIA ===================== -->
+<section class="stratum dirtband">
+  <div class="wrap">
+    <span class="stratum-tag">▤ camada de terra</span>
+    <h2 class="reveal">Pra onde vai o seu dinheiro</h2>
+    <div class="money">
+      <div class="reveal">
+        <p>A mensalidade existe por um motivo só: <strong>pagar a hospedagem</strong>. Não tem dono lucrando, não tem item pago, não tem vantagem pra quem paga mais. Quem assina e quem está no teste jogam exatamente o mesmo jogo.</p>
+        <div class="bar" aria-label="100% do valor vai para hospedagem"><span class="host"></span></div>
+        <ul class="ledger">
+          <li><span>Hospedagem do servidor</span><strong style="color:var(--gold)">100%</strong></li>
+          <li><span>Lucro de alguém</span><strong>R$0</strong></li>
+          <li><span>Pay-to-win</span><strong>nunca</strong></li>
+        </ul>
+      </div>
+      <div class="reveal" style="text-align:center">
+        <div class="price">R$4<span style="font-size:.4em;color:var(--muted)">/mês</span></div>
+        <p class="muted" style="margin-top:6px">o preço de um café pra um servidor inteiro vivo</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CAMADA: PEDRA — REGRAS RÁPIDAS ===================== -->
+<section class="stratum stoneband">
+  <div class="wrap">
+    <span class="stratum-tag">▦ camada de pedra</span>
+    <h2 class="reveal">O que você precisa saber</h2>
+    <div class="rules">
+      <div class="rule reveal"><h3>Original ou pirata, tanto faz</h3><p class="muted">O servidor roda em modo offline e aceita os dois. Sua conta é protegida por senha (você define com <code>/register</code> no jogo).</p></div>
+      <div class="rule reveal"><h3>Você acorda o servidor</h3><p class="muted">Pra economizar, ele desliga sozinho quando vazio. Mande <strong>/ligar</strong> no Discord e em ~1 min ele tá no ar.</p></div>
+      <div class="rule reveal"><h3>Esqueceu de pagar?</h3><p class="muted">Sem drama. Você entra em modo "dormindo" por uns dias; é só pagar que volta na hora pra whitelist.</p></div>
+      <div class="rule reveal"><h3>Seu lugar é seu</h3><p class="muted">Seu vínculo fica salvo pelo Discord. Trocou de nick? Roda <strong>/registrar</strong> de novo e pronto.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CAMADA MAIS FUNDA: MINÉRIO — O BÔNUS ===================== -->
+<section class="stratum oreband" id="bonus">
+  <div class="wrap">
+    <span class="stratum-tag">◈ camada de minério</span>
+    <h2 class="reveal">O bônus: sorteio de conta original</h2>
+    <div class="prize">
+      <div class="gem reveal" role="img" aria-label="Gema de diamante estilizada"></div>
+      <div class="reveal">
+        <span class="fair">⚖ sorteio comprovadamente justo</span>
+        <p>Todo mês, <strong>todos os membros ativos concorrem</strong> a uma conta original do Minecraft de verdade — pra você jogar de boa em qualquer lugar.</p>
+        <p class="muted">O sorteio usa uma fonte de aleatoriedade pública (drand). Antes de sortear, a lista é "lacrada" com um código e o resultado vem de um número que <strong>ninguém — nem a gente — consegue prever ou mudar</strong>. Depois, qualquer pessoa pode refazer a conta e conferir o ganhador.</p>
+        <a class="btn btn-diamond" href="#discord" style="margin-top:6px">Quero concorrer →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BEDROCK / FOOTER ===================== -->
+<footer class="bedrock" id="discord">
+  <div class="wrap">
+    <div class="frow">
+      <div>
+        <h3 style="font-family:'Press Start 2P';font-size:14px">Bora?</h3>
+        <p class="muted" style="margin:6px 0 0">Entra no Discord e roda <strong>/registrar</strong>.</p>
+      </div>
+      <a class="btn btn-grass" href="https://discord.gg/SEU-CONVITE">Entrar no Discord →</a>
+      <span class="addr" id="copyAddr2" data-addr="seu-servidor.exaroton.me" role="button" tabindex="0">seu-servidor.exaroton.me</span>
+    </div>
+    <p class="disclaimer">Bloco Comum é um projeto comunitário, sem fins lucrativos, feito por fãs. Não é afiliado, patrocinado ou endossado pela Mojang Studios ou pela Microsoft. "Minecraft" é marca de seus respectivos donos.</p>
+  </div>
+</footer>
+
+<script>
+  // estrelas do céu
+  (function(){
+    const s=document.getElementById('stars'); if(!s) return;
+    for(let i=0;i<46;i++){const e=document.createElement('i');
+      e.style.left=Math.random()*100+'%';e.style.top=Math.random()*100+'%';
+      e.style.opacity=(.2+Math.random()*.6).toFixed(2);s.appendChild(e);}
+  })();
+  // copiar endereço
+  function copyAddr(el){
+    const a=el.getAttribute('data-addr');
+    navigator.clipboard?.writeText(a).then(()=>{
+      const old=el.textContent; el.textContent='✓ copiado!';
+      setTimeout(()=>el.textContent=old,1400);
+    });
+  }
+  document.getElementById('copyAddr')?.addEventListener('click',e=>copyAddr(e.currentTarget));
+  document.getElementById('copyAddr2')?.addEventListener('click',e=>copyAddr(e.currentTarget));
+  document.getElementById('copyAddr2')?.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();copyAddr(e.currentTarget);}});
+  // revelar ao rolar
+  const io=new IntersectionObserver((es)=>es.forEach(x=>{if(x.isIntersecting)x.target.classList.add('in')}),{threshold:.15});
+  document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+</script>
+</body>
+</html>
