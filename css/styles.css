@@ -136,47 +136,46 @@ p{margin:0 0 16px}
 /* ============================================================
    FAIXAS (estratos) — padding consistente + “crosta” no topo
    ============================================================ */
-.band{position:relative;padding:88px 0}
-.band::before{content:"";position:absolute;top:0;left:0;right:0;height:5px;
-  background:var(--crust,rgba(0,0,0,.4));box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.band{position:relative;padding:88px 0;
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  border-top:1px solid rgba(0,0,0,.55);
+  box-shadow:inset 0 16px 28px -12px rgba(0,0,0,.85)}
+.band h2,.band .eyebrow{text-shadow:0 2px 12px rgba(0,0,0,.55)}
 
-/* —— superfície (pergaminho claro) —— */
-.surface{background:linear-gradient(180deg,var(--parchment) 0,var(--parchment-2) 100%);
-  color:var(--ink);--crust:linear-gradient(90deg,var(--forest),#3f6b34)}
-.surface .eyebrow{color:#7a5a1c}
-.surface .eyebrow::after{background:linear-gradient(90deg,#7a5a1c,transparent)}
-.surface p{color:#4a3a25}
-.surface .muted{color:var(--ink-soft)}
+/* —— superfície: a paisagem do topo. Scrim mais forte no alto p/ o céu claro não apagar o título —— */
+.surface{color:var(--cream);
+  background-image:
+    linear-gradient(180deg,rgba(10,14,20,.74) 0%,rgba(10,14,20,.34) 46%,rgba(10,14,20,.58) 100%),
+    url("../img/layer-surface.webp")}
+.surface .intro{text-shadow:0 1px 8px rgba(0,0,0,.6)}
 
 /* —— terra —— */
-.earth{background:
-   radial-gradient(120% 90% at 80% 0%,rgba(201,162,75,.10),transparent 55%),
-   linear-gradient(180deg,#43291a 0,#2c1b10 100%);
-  --crust:linear-gradient(90deg,#5a3a22,#3a2414)}
+.earth{background-image:
+   linear-gradient(180deg,rgba(22,13,6,.60),rgba(12,8,4,.66)),
+   url("../img/layer-earth.webp")}
 
-/* —— pedra —— */
-.stone{background:linear-gradient(180deg,#2c323f 0,#1f242e 100%);
-  --crust:linear-gradient(90deg,#454b58,#2b303a)}
+/* —— pedra (veios de ouro nas bordas) —— */
+.stone{background-image:
+   linear-gradient(180deg,rgba(12,14,18,.56),rgba(10,12,16,.64)),
+   url("../img/layer-stone.webp")}
 
-/* —— veio profundo (quase preto + brilho de cristal) —— */
-.deep{background:
-   radial-gradient(60% 55% at 18% 35%,rgba(143,214,227,.12),transparent 60%),
-   radial-gradient(50% 45% at 90% 75%,rgba(143,214,227,.09),transparent 60%),
-   linear-gradient(180deg,#141c22 0,#0b1014 100%);
-  --crust:linear-gradient(90deg,var(--crystal),#2f8e9a)}
+/* —— veio profundo: diamantes nas bordas. Scrim radial escurece o centro (texto) e poupa as bordas (brilho) —— */
+.deep{background-image:
+   radial-gradient(82% 84% at 50% 50%,rgba(8,11,14,.80) 0%,rgba(8,11,14,.40) 100%),
+   url("../img/layer-deep.webp")}
 
 /* ---------- Como começar (3 passos numerados = sequência real) ---------- */
 .intro{max-width:56ch;font-size:18px;margin-bottom:34px}
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.step{position:relative;background:rgba(255,255,255,.5);
-  border:1px solid var(--parchment-2);border-radius:var(--r);
-  padding:26px 24px;box-shadow:0 6px 18px rgba(91,70,40,.10)}
+.step{position:relative;background:rgba(14,19,27,.72);-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px);
+  border:1px solid rgba(201,162,75,.28);border-radius:var(--r);
+  padding:26px 24px;box-shadow:0 10px 26px rgba(0,0,0,.42)}
 .step .n{font-family:"Cinzel",serif;font-weight:700;font-size:14px;letter-spacing:2px;
-  color:var(--gold-deep);display:block;margin-bottom:16px}
+  color:var(--gold-bright);display:block;margin-bottom:16px}
 .step .n::before{content:"";display:inline-block;width:22px;height:2px;
   background:var(--gold);margin-right:10px;vertical-align:middle}
-.step h3{color:#3a2c19}
-.step p{color:#5a4730;margin:0;font-size:17px}
+.step h3{color:#f3ead6}
+.step p{color:#d8cfbc;margin:0;font-size:17px}
 
 /* ---------- Transparência (terra) ---------- */
 .money{display:grid;grid-template-columns:1.4fr .9fr;gap:42px;align-items:center}
@@ -205,24 +204,21 @@ p{margin:0 0 16px}
   color:var(--crystal);background:rgba(143,214,227,.10);padding:1px 6px;border-radius:4px}
 
 /* ---------- Sorteio (veio profundo) — clímax visual ---------- */
-.prize{display:grid;grid-template-columns:.85fr 1.15fr;gap:46px;align-items:center}
-.prize__img{position:relative;border-radius:var(--r);overflow:hidden;
-  border:2px solid rgba(143,214,227,.25);box-shadow:0 12px 40px rgba(0,0,0,.5)}
-.prize__img img{width:100%;height:100%;object-fit:cover;max-height:560px}
-.prize__img::after{content:"";position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(70% 40% at 50% 100%,rgba(143,214,227,.28),transparent 70%);
-  mix-blend-mode:screen;animation:shimmer 5.5s ease-in-out infinite}
-@keyframes shimmer{0%,100%{opacity:.55}50%{opacity:1}}
-.fairbadge{display:inline-flex;align-items:center;gap:9px;margin-bottom:14px;
+.prize{max-width:660px;margin:0 auto;text-align:center}
+.fairbadge{display:inline-flex;align-items:center;gap:9px;margin-bottom:16px;
   font-family:"Cinzel",serif;font-size:14px;letter-spacing:1px;color:var(--crystal);
-  background:rgba(143,214,227,.08);border:1px solid rgba(143,214,227,.32);
-  padding:7px 14px;border-radius:var(--r)}
-.prize p{color:#d3e6ea}
+  background:rgba(143,214,227,.10);border:1px solid rgba(143,214,227,.40);
+  padding:7px 14px;border-radius:var(--r);box-shadow:0 0 22px rgba(143,214,227,.18)}
+.prize p{color:#dbe9ed;text-shadow:0 1px 10px rgba(0,0,0,.55)}
 
 /* ============================================================
    RODAPÉ — a rocha-mãe
    ============================================================ */
-.footer{background:#080b11;padding:54px 0 40px;border-top:5px solid #000}
+.footer{background-image:
+   linear-gradient(180deg,rgba(8,11,16,.84),rgba(5,7,11,.93)),
+   url("../img/layer-bedrock.webp");
+  background-size:cover;background-position:center;background-repeat:no-repeat;
+  padding:54px 0 40px;border-top:5px solid #000}
 .frow{display:flex;flex-wrap:wrap;gap:26px;justify-content:space-between;align-items:center}
 .fbrand{display:flex;align-items:center;gap:13px}
 .fbrand img{width:48px;height:48px;border-radius:5px}
@@ -248,8 +244,6 @@ p{margin:0 0 16px}
   .steps,.rules{grid-template-columns:1fr}
   .money{grid-template-columns:1fr;gap:26px}
   .pricebox{text-align:left}
-  .prize{grid-template-columns:1fr;gap:26px}
-  .prize__img img{max-height:380px}
   .hero__inner::before,.hero__inner::after{display:none}
 }
 @media (max-width:520px){
@@ -260,7 +254,7 @@ p{margin:0 0 16px}
 /* Acessibilidade: respeita quem prefere menos movimento */
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .scrollcue .arrow,.prize__img::after{animation:none}
+  .scrollcue .arrow{animation:none}
   .reveal{transition:none;opacity:1;transform:none}
   .hero__bg{will-change:auto}
 }
